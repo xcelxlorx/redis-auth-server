@@ -4,7 +4,6 @@ import com.example.refresh.auth.JwtProvider;
 import com.example.refresh.auth.Token;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,7 +17,7 @@ public class MemberService {
 
     private final MemberRepository memberRepository;
 
-    private final RedisTemplate<String, Long> redisTemplate;
+    private final RedisTemplate<String, String> redisTemplate;
 
     public void join(MemberRequest.JoinDto requestDto){
         Member member = requestDto.toEntity();
@@ -30,8 +29,10 @@ public class MemberService {
         return issueToken(member);
     }
 
-    public void reissueToken(String refreshToken){
-
+    public Token reissueToken(String refreshToken){
+        Long memberId = JwtProvider.decodeRefreshToken(refreshToken);
+        Member member = memberRepository.findById(memberId).orElseThrow();
+        return issueToken(member);
     }
 
     public ResponseCookie createCookie(String token){
@@ -42,8 +43,8 @@ public class MemberService {
                 .build();
     }
 
-    public void logout(){
-
+    public void logout(Long id){
+        redisTemplate.delete(id.toString());
     }
 
     private Token issueToken(Member member) {
@@ -54,8 +55,7 @@ public class MemberService {
     }
 
     private void saveToken(String refreshToken, Member member){
-        ValueOperations<String, Long> valueOps = redisTemplate.opsForValue();
-        valueOps.set(refreshToken, member.getId());
-        redisTemplate.expire(refreshToken, 60L, TimeUnit.SECONDS);
+        redisTemplate.opsForValue().set(member.getId().toString(), refreshToken);
+        redisTemplate.expire(member.getId().toString(), 60L, TimeUnit.SECONDS);
     }
 }

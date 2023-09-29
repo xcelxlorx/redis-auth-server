@@ -5,6 +5,7 @@ import com.example.refresh.auth.Token;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,8 +27,8 @@ public class MemberController {
     public ResponseEntity<?> login(@RequestBody MemberRequest.LoginDto requestDto){
         Token token = memberService.login(requestDto);
         String cookie = memberService.createCookie(token.getRefreshToken()).toString();
-        log.info("access=" + token.getAccessToken());
-        log.info("refresh=" + token.getRefreshToken());
+        log.info("login access=" + token.getAccessToken());
+        log.info("login refresh=" + token.getRefreshToken());
         return ResponseEntity.ok()
                 .header(JwtProvider.HEADER, token.getAccessToken())
                 .header(HttpHeaders.SET_COOKIE, cookie)
@@ -36,14 +37,27 @@ public class MemberController {
 
     @PostMapping("/reissue")
     public ResponseEntity<?> reissueToken(@CookieValue("refreshToken") String refreshToken){
-        memberService.reissueToken(refreshToken);
-        return ResponseEntity.ok().body("ok");
+        Token token = memberService.reissueToken(refreshToken);
+        String cookie = memberService.createCookie(token.getRefreshToken()).toString();
+        log.info("reissue access=" + token.getAccessToken());
+        log.info("reissue refresh=" + token.getRefreshToken());
+        return ResponseEntity.ok()
+                .header(JwtProvider.HEADER, token.getAccessToken())
+                .header(HttpHeaders.SET_COOKIE, cookie)
+                .body("ok");
     }
 
     @PostMapping("/logout")
     public ResponseEntity<?> logout(){
-        memberService.logout();
-        var response = "";
-        return ResponseEntity.ok().body(response);
+        Long id = 1L; //임시 하드코딩
+        memberService.logout(id);
+
+        String cookie = ResponseCookie.from("refreshToken", "")
+                .maxAge(0)
+                .build().toString();
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, cookie)
+                .body("ok");
     }
 }

@@ -73,6 +73,16 @@ public class JwtProvider {
                 .compact();
     }
 
+    public static Long decodeRefreshToken(String refreshToken){
+        SecretKey secretKey = Keys.hmacShaKeyFor(secret.getBytes());
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(secretKey)
+                .build()
+                .parseClaimsJws(refreshToken)
+                .getBody();
+        return Long.valueOf(claims.getSubject());
+    }
+
     private static Date getNow() {
         return new Date();
     }
