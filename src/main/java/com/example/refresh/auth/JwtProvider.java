@@ -1,4 +1,4 @@
-package com.example.refresh.jwt;
+package com.example.refresh.auth;
 
 import com.example.refresh.member.Member;
 import io.jsonwebtoken.Claims;
@@ -29,18 +29,18 @@ public class JwtProvider {
     private static Long refreshExpires;
 
     @Value("${jwt.secret}")
-    private void setSecret(String value){
-        secret = value;
+    public void setSecret(String secret) {
+        JwtProvider.secret = secret;
     }
 
     @Value("${jwt.token.access-expires}")
-    private void setAccessExpires(Long value){
-        accessExpires = value;
+    public void setAccessExpires(Long accessExpires) {
+        JwtProvider.accessExpires = accessExpires;
     }
 
     @Value("${jwt.token.refresh-expires}")
-    private void setRefreshExpires(Long value){
-        refreshExpires = value;
+    public void setRefreshExpires(Long refreshExpires) {
+        JwtProvider.refreshExpires = refreshExpires;
     }
 
     public static String createAccessToken(Member member){

@@ -1,6 +1,7 @@
 package com.example.refresh.member;
 
-import com.example.refresh.jwt.JwtProvider;
+import com.example.refresh.auth.JwtProvider;
+import com.example.refresh.auth.Token;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
@@ -24,11 +25,11 @@ public class MemberController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody MemberRequest.LoginDto requestDto){
         Token token = memberService.login(requestDto);
-        String cookie = memberService.createCookie(token.refreshToken).toString();
-        log.info("access=" + token.accessToken);
-        log.info("refresh=" + token.refreshToken);
+        String cookie = memberService.createCookie(token.getRefreshToken()).toString();
+        log.info("access=" + token.getAccessToken());
+        log.info("refresh=" + token.getRefreshToken());
         return ResponseEntity.ok()
-                .header(JwtProvider.HEADER, token.accessToken)
+                .header(JwtProvider.HEADER, token.getAccessToken())
                 .header(HttpHeaders.SET_COOKIE, cookie)
                 .body("ok");
     }

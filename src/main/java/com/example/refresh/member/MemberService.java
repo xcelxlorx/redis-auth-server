@@ -1,10 +1,15 @@
 package com.example.refresh.member;
 
-import com.example.refresh.jwt.JwtProvider;
+import com.example.refresh.auth.JwtProvider;
+import com.example.refresh.auth.Token;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.concurrent.TimeUnit;
 
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
@@ -12,6 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class MemberService {
 
     private final MemberRepository memberRepository;
+
+    private final RedisTemplate<String, Long> redisTemplate;
 
     public void join(MemberRequest.JoinDto requestDto){
         Member member = requestDto.toEntity();
@@ -35,13 +42,20 @@ public class MemberService {
                 .build();
     }
 
+    public void logout(){
+
+    }
+
     private Token issueToken(Member member) {
         String accessToken = JwtProvider.createAccessToken(member);
         String refreshToken = JwtProvider.createRefreshToken(member);
+        saveToken(refreshToken, member);
         return new Token(accessToken, refreshToken);
     }
 
-    public void logout(){
-
+    private void saveToken(String refreshToken, Member member){
+        ValueOperations<String, Long> valueOps = redisTemplate.opsForValue();
+        valueOps.set(refreshToken, member.getId());
+        redisTemplate.expire(refreshToken, 60L, TimeUnit.SECONDS);
     }
 }
