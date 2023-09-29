@@ -1,6 +1,8 @@
 package com.example.refresh.member;
 
+import com.example.refresh.jwt.JwtProvider;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,8 +18,27 @@ public class MemberService {
         memberRepository.save(member);
     }
 
-    public void login(MemberRequest.LoginDto requestDto){
+    public Token login(MemberRequest.LoginDto requestDto){
+        Member member = memberRepository.findByEmail(requestDto.email());
+        return issueToken(member);
+    }
 
+    public void reissueToken(String refreshToken){
+
+    }
+
+    public ResponseCookie createCookie(String token){
+        return ResponseCookie.from("refreshToken", token)
+                .httpOnly(true)
+                .secure(true)
+                .maxAge(JwtProvider.getRefreshExpires())
+                .build();
+    }
+
+    private Token issueToken(Member member) {
+        String accessToken = JwtProvider.createAccessToken(member);
+        String refreshToken = JwtProvider.createRefreshToken(member);
+        return new Token(accessToken, refreshToken);
     }
 
     public void logout(){
